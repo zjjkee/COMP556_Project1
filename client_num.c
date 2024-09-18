@@ -7,6 +7,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <sys/time.h>
+
 
 /* simple client, takes two parameters, the server domain name,
    and the server port number */
@@ -38,12 +40,13 @@ int main(int argc, char** argv) {
   int recvcount;
   int iterval = 0;
 
-  int size = argv[3];
-  int count = argv[4];
+  int size = atoi(argv[3]);
+  int count = atoi(argv[4]);
   
   double elapsed = 0.0;
   struct timeval tv;
-  struct timezone tz;
+  int stv_sec, stv_usec, tv_sec, tv_usec;
+//   struct timezone tz;
   long int sent_sec, sent_usec;
   
   if (size < 18 || size > 65535) {
@@ -98,14 +101,19 @@ int main(int argc, char** argv) {
       *(short*)(sendbuffer) = (short)htons(size);
 
       // Timestamp in header
-      gettimeofday(&tv, &tz);
-      *(long int*)(sendbuffer + 2) = (long int)htonl(tv.tv_sec);
-      *(long int*)(sendbuffer + 10) = (long int)htonl(tv.tv_usec);
+    //   gettimeofday(&tv, &tz);
+        if(gettimeofday(&tv,NULL) == 0){
+            stv_sec = (int)tv.tv_sec;
+            stv_usec = (int)tv.tv_usec;
+        }
+      *(long int*)(sendbuffer + 2) = (long int)htonl(stv_sec);
+      *(long int*)(sendbuffer + 10) = (long int)htonl(stv_usec);
 
       // Nothing to do - Rest of data is 0
 
       // Send the message
       send(sock, sendbuffer, size, 0);
+
 
       // Wait for receive
       recvcount = recv(sock, buffer, size, 0);
@@ -113,25 +121,34 @@ int main(int argc, char** argv) {
           perror("receive failure");
           abort();
       }
+        if(gettimeofday(&tv,NULL) == 0){
+            tv_sec = (int)tv.tv_sec;
+            tv_usec = (int)tv.tv_usec;
+        }
 
-      // Latency calculation    
-      if (recvcount != size) {
-          printf("Message incomplete, something is still being transmitted\n");
-          // Todo: How to handle this?
-      }
-      else {
-          gettimeofday(&tv, &tz);
-          sent_sec = (long int)ntohl(*(long int*)(buffer + 2));
-          sent_usec = (long int)ntohl(*(long int*)(buffer + 10));
-          elapsed = elapsed + ((tv.tv_sec - sent_sec) * 1000 + ((tv.tv_usec - sent_usec) / 1000));
-      }
-
-      // Iter update
+        // Latency calculation  
+        float sec_diff = (tv_sec - stv_sec)*1000.00;
+        float usec_diff = (tv_usec - stv_usec)/1000.00;	
+        float tmp = sec_diff + usec_diff;
+        printf("Latency in iteration %i is %.3f\n", iterval+1 ,tmp);
+    //   if (recvcount != size) {
+    //       printf("Message incomplete, something is still being transmitted\n");
+    //       // Todo: How to handle this?
+    //   }
+    //   else {
+    //     //   gettimeofday(&tv, &tz);
+    //       gettimeofday(&tv, NULL);
+    //       sent_sec = (long int)ntohl(*(long int*)(buffer + 2));
+    //       sent_usec = (long int)ntohl(*(long int*)(buffer + 10));
+    //       elapsed = elapsed + ((tv.tv_sec - sent_sec) * 1000 + ((tv.tv_usec - sent_usec) / 1000));
+    //   }
+    //   printf("Latency observed: %.3f", (elapsed / count));
+    //   // Iter update
       iterval = iterval + 1;
   }
 
   // Final latency value
-  printf("Latency: %.3f", (elapsed / count));
+//   printf("Latency: %.3f", (elapsed / count));
 
   // Free resources 
   close(sock);
