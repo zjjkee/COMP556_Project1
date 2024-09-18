@@ -1,0 +1,4 @@
+*.o
+*.ext
+client
+server
