@@ -4,8 +4,7 @@
 
 1. **Aathmika Neelakanta (S01469766)** - Responsible for Client development and measurement tasks.
 2. **Bo Sung Kim(S01361291)** - Responsible for Client development and measurement tasks.
-3. **Tzuhan Su(S01469920)** - Responsible for Server development.
-4. **Jingke Zou(S01505152)** - Responsible for testing, packaging, and project documentation.
+3. **Tzuhan Su(S01469920)&Jingke Zou(S01505152)** - Responsible for Server development,testing, packaging, and project documentation.
 
 ## Project Overview
 
@@ -21,5 +20,4 @@ This project implements a Ping-Pong Client and Server to measure the network's p
   
 
 ## How to Build
-
 To build the project, ensure you have a working C compiler on your system. Navigate to the project directory and run:

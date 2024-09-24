@@ -1,0 +1,5 @@
+*.o
+*.ext
+client
+server
+token.txt
