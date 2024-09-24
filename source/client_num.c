@@ -3,9 +3,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/time.h>
@@ -118,15 +116,35 @@ int main(int argc, char **argv) {
     // Nothing to do - Rest of data is 0
 
     // Send the message
-    send(sock, sendbuffer, size, 0);
+    int sentSizeCount = 0;
+    int tempSent = 0;
+    
+    while (sentSizeCount != size){
+      tempSent = send(sock, sendbuffer + sentSizeCount, size - sentSizeCount, 0);
+      if (tempSent <= 0) {
+        continue;
+      }
+      sentSizeCount += tempSent;
+    }
+
 
 
     // Wait for receive
-    recvcount = recv(sock, buffer, size, 0);
-    if (recvcount != size) {
-        perror("receive failure");
-        abort();
+    int recSizeCount = 0;
+    int tempRec = 0;
+    
+    while (recSizeCount != size){
+      tempRec = recv(sock, buffer + recSizeCount, size - recSizeCount, 0);
+      if (tempRec <= 0) {
+        continue;
+      }
+      recSizeCount += tempRec;
     }
+    // recvcount = recv(sock, buffer, size, 0);
+    // if (recvcount != size) {
+    //     perror("receive failure");
+    //     abort();
+    // }
 
     // calculate the total latency = (client send to server) + (server send to client)
     server_tv_sec = be64toh(*(uint64_t *)(buffer + 18));
@@ -171,32 +189,32 @@ int main(int argc, char **argv) {
   return 0;
 }
 
-uint64_t htobe64(uint64_t host_64bits)
-{
-  uint64_t result = 0;
-  result |= (host_64bits & 0x00000000000000FF) << 56;
-  result |= (host_64bits & 0x000000000000FF00) << 40;
-  result |= (host_64bits & 0x0000000000FF0000) << 24;
-  result |= (host_64bits & 0x00000000FF000000) << 8;
-  result |= (host_64bits & 0x000000FF00000000) >> 8;
-  result |= (host_64bits & 0x0000FF0000000000) >> 24;
-  result |= (host_64bits & 0x00FF000000000000) >> 40;
-  result |= (host_64bits & 0xFF00000000000000) >> 56;
-  return result;
-}
+// uint64_t htobe64(uint64_t host_64bits)
+// {
+//   uint64_t result = 0;
+//   result |= (host_64bits & 0x00000000000000FF) << 56;
+//   result |= (host_64bits & 0x000000000000FF00) << 40;
+//   result |= (host_64bits & 0x0000000000FF0000) << 24;
+//   result |= (host_64bits & 0x00000000FF000000) << 8;
+//   result |= (host_64bits & 0x000000FF00000000) >> 8;
+//   result |= (host_64bits & 0x0000FF0000000000) >> 24;
+//   result |= (host_64bits & 0x00FF000000000000) >> 40;
+//   result |= (host_64bits & 0xFF00000000000000) >> 56;
+//   return result;
+// }
 
-uint64_t be64toh(uint64_t big_endian_64bits)
-{
-  uint64_t result = 0;
+// uint64_t be64toh(uint64_t big_endian_64bits)
+// {
+//   uint64_t result = 0;
 
-  result |= (big_endian_64bits & 0x00000000000000FFULL) << 56;
-  result |= (big_endian_64bits & 0x000000000000FF00ULL) << 40;
-  result |= (big_endian_64bits & 0x0000000000FF0000ULL) << 24;
-  result |= (big_endian_64bits & 0x00000000FF000000ULL) << 8;
-  result |= (big_endian_64bits & 0x000000FF00000000ULL) >> 8;
-  result |= (big_endian_64bits & 0x0000FF0000000000ULL) >> 24;
-  result |= (big_endian_64bits & 0x00FF000000000000ULL) >> 40;
-  result |= (big_endian_64bits & 0xFF00000000000000ULL) >> 56;
+//   result |= (big_endian_64bits & 0x00000000000000FFULL) << 56;
+//   result |= (big_endian_64bits & 0x000000000000FF00ULL) << 40;
+//   result |= (big_endian_64bits & 0x0000000000FF0000ULL) << 24;
+//   result |= (big_endian_64bits & 0x00000000FF000000ULL) << 8;
+//   result |= (big_endian_64bits & 0x000000FF00000000ULL) >> 8;
+//   result |= (big_endian_64bits & 0x0000FF0000000000ULL) >> 24;
+//   result |= (big_endian_64bits & 0x00FF000000000000ULL) >> 40;
+//   result |= (big_endian_64bits & 0xFF00000000000000ULL) >> 56;
 
-  return result;
-}
+//   return result;
+// }

@@ -314,32 +314,32 @@ int main(int argc, char **argv) {
     }
 }
 
-uint64_t htobe64(uint64_t host_64bits)
-{
-	uint64_t result = 0;
-	result |= (host_64bits & 0x00000000000000FF) << 56;
-	result |= (host_64bits & 0x000000000000FF00) << 40;
-	result |= (host_64bits & 0x0000000000FF0000) << 24;
-	result |= (host_64bits & 0x00000000FF000000) << 8;
-	result |= (host_64bits & 0x000000FF00000000) >> 8;
-	result |= (host_64bits & 0x0000FF0000000000) >> 24;
-	result |= (host_64bits & 0x00FF000000000000) >> 40;
-	result |= (host_64bits & 0xFF00000000000000) >> 56;
-	return result;
-}
+// uint64_t htobe64(uint64_t host_64bits)
+// {
+// 	uint64_t result = 0;
+// 	result |= (host_64bits & 0x00000000000000FF) << 56;
+// 	result |= (host_64bits & 0x000000000000FF00) << 40;
+// 	result |= (host_64bits & 0x0000000000FF0000) << 24;
+// 	result |= (host_64bits & 0x00000000FF000000) << 8;
+// 	result |= (host_64bits & 0x000000FF00000000) >> 8;
+// 	result |= (host_64bits & 0x0000FF0000000000) >> 24;
+// 	result |= (host_64bits & 0x00FF000000000000) >> 40;
+// 	result |= (host_64bits & 0xFF00000000000000) >> 56;
+// 	return result;
+// }
 
-uint64_t be64toh(uint64_t big_endian_64bits)
-{
-	uint64_t result = 0;
+// uint64_t be64toh(uint64_t big_endian_64bits)
+// {
+// 	uint64_t result = 0;
 
-	result |= (big_endian_64bits & 0x00000000000000FFULL) << 56;
-	result |= (big_endian_64bits & 0x000000000000FF00ULL) << 40;
-	result |= (big_endian_64bits & 0x0000000000FF0000ULL) << 24;
-	result |= (big_endian_64bits & 0x00000000FF000000ULL) << 8;
-	result |= (big_endian_64bits & 0x000000FF00000000ULL) >> 8;
-	result |= (big_endian_64bits & 0x0000FF0000000000ULL) >> 24;
-	result |= (big_endian_64bits & 0x00FF000000000000ULL) >> 40;
-	result |= (big_endian_64bits & 0xFF00000000000000ULL) >> 56;
+// 	result |= (big_endian_64bits & 0x00000000000000FFULL) << 56;
+// 	result |= (big_endian_64bits & 0x000000000000FF00ULL) << 40;
+// 	result |= (big_endian_64bits & 0x0000000000FF0000ULL) << 24;
+// 	result |= (big_endian_64bits & 0x00000000FF000000ULL) << 8;
+// 	result |= (big_endian_64bits & 0x000000FF00000000ULL) >> 8;
+// 	result |= (big_endian_64bits & 0x0000FF0000000000ULL) >> 24;
+// 	result |= (big_endian_64bits & 0x00FF000000000000ULL) >> 40;
+// 	result |= (big_endian_64bits & 0xFF00000000000000ULL) >> 56;
 
-	return result;
-}
+// 	return result;
+// }
