@@ -12,8 +12,8 @@
 /* simple client, takes two parameters, the server domain name,
    and the server port number */
 
-uint64_t htobe64(uint64_t host_64bits);
-uint64_t be64toh(uint64_t big_endian_64bits);
+// uint64_t htobe64(uint64_t host_64bits);
+// uint64_t be64toh(uint64_t big_endian_64bits);
 
 int main(int argc, char** argv) {
     /* our client socket */
@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
         *(uint16_t*)(sendbuffer) = (uint16_t)htons(size);
 
         // set the 1st timestamp in message
-        double client_send_tv_sec, client_send_tv_usec, recv_tv_sec, recv_tv_usec;
+        uint64_t client_send_tv_sec, client_send_tv_usec, recv_tv_sec, recv_tv_usec;
         if (gettimeofday(&tv, NULL) == 0) {
             client_send_tv_sec = (uint64_t)tv.tv_sec;
             client_send_tv_usec = (uint64_t)tv.tv_usec;
@@ -137,8 +137,8 @@ int main(int argc, char** argv) {
             recSizeCount += tempRec;
         }
 
-        double sent_tv_sec = be64toh(*(uint64_t*)(buffer + 2));
-        double sent_tv_usec = be64toh(*(uint64_t*)(buffer + 10));
+        uint64_t sent_tv_sec = be64toh(*(uint64_t *)(buffer + 2));
+        uint64_t sent_tv_usec = be64toh(*(uint64_t *)(buffer + 10));
 
         if (gettimeofday(&tv, NULL) == 0)
         {
@@ -146,8 +146,8 @@ int main(int argc, char** argv) {
             recv_tv_usec = (uint64_t)tv.tv_usec;
         }
 
-        double lat_sec_diff = recv_tv_sec - sent_tv_sec;
-        double lat_usec_diff = recv_tv_usec - sent_tv_usec;
+        uint64_t lat_sec_diff = recv_tv_sec - sent_tv_sec;
+        uint64_t lat_usec_diff = recv_tv_usec - sent_tv_usec;
         double total_lat = (double)(lat_sec_diff * 1000 + ((double)lat_usec_diff) / 1000);
 
         printf("Iteration %d:\n", interval + 1);
@@ -170,3 +170,35 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
+/*
+uint64_t htobe64(uint64_t host_64bits)
+{
+    uint64_t result = 0;
+    result |= (host_64bits & 0x00000000000000FF) << 56;
+    result |= (host_64bits & 0x000000000000FF00) << 40;
+    result |= (host_64bits & 0x0000000000FF0000) << 24;
+    result |= (host_64bits & 0x00000000FF000000) << 8;
+    result |= (host_64bits & 0x000000FF00000000) >> 8;
+    result |= (host_64bits & 0x0000FF0000000000) >> 24;
+    result |= (host_64bits & 0x00FF000000000000) >> 40;
+    result |= (host_64bits & 0xFF00000000000000) >> 56;
+    return result;
+}
+
+uint64_t be64toh(uint64_t big_endian_64bits)
+{
+    uint64_t result = 0;
+
+    result |= (big_endian_64bits & 0x00000000000000FFULL) << 56;
+    result |= (big_endian_64bits & 0x000000000000FF00ULL) << 40;
+    result |= (big_endian_64bits & 0x0000000000FF0000ULL) << 24;
+    result |= (big_endian_64bits & 0x00000000FF000000ULL) << 8;
+    result |= (big_endian_64bits & 0x000000FF00000000ULL) >> 8;
+    result |= (big_endian_64bits & 0x0000FF0000000000ULL) >> 24;
+    result |= (big_endian_64bits & 0x00FF000000000000ULL) >> 40;
+    result |= (big_endian_64bits & 0xFF00000000000000ULL) >> 56;
+
+    return result;
+}
+*/
