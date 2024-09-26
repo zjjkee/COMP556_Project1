@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   /* number of message exchanges to perform */
   int count = atoi(argv[4]);
   
-  double elapsed = 0.0;
+  uint16_t elapsed = 0;
   struct timeval tv;
   uint64_t client_send_tv_sec, client_send_tv_usec, client_recv_tv_sec, client_recv_tv_usec;
   uint64_t server_tv_sec, server_tv_usec;
@@ -140,19 +140,17 @@ int main(int argc, char **argv) {
       }
       recSizeCount += tempRec;
     }
-    // recvcount = recv(sock, buffer, size, 0);
-    // if (recvcount != size) {
-    //     perror("receive failure");
-    //     abort();
-    // }
 
     // calculate the total latency = (client send to server) + (server send to client)
     server_tv_sec = be64toh(*(uint64_t *)(buffer + 18));
     server_tv_usec = be64toh(*(uint64_t *)(buffer + 26));
 
-    double ctos_sec_diff = server_tv_sec - client_send_tv_sec;
-    double ctos_usec_diff = server_tv_usec - client_send_tv_usec;
-    double ctos_msec_diff = (double)(ctos_sec_diff * 1000 + ((double)ctos_usec_diff) / 1000);
+    uint64_t ctos_sec_diff = server_tv_sec - client_send_tv_sec;
+    uint64_t ctos_usec_diff = server_tv_usec - client_send_tv_usec;
+    uint64_t ctos_msec_diff = (uint64_t)(ctos_sec_diff * 1000.0000 + ((uint64_t)ctos_usec_diff) / 1000.0000);
+    printf("client milliseconds: %llu\n", ctos_msec_diff);
+    printf("client microseconds: %llu\n", ctos_usec_diff);
+    printf("client seconds: %llu\n", ctos_sec_diff);
 
     if (gettimeofday(&tv, NULL) == 0)
     {
@@ -160,11 +158,15 @@ int main(int argc, char **argv) {
       client_recv_tv_usec = (uint64_t)tv.tv_usec;
     }
 
-    double stoc_sec_diff = client_recv_tv_sec - server_tv_sec;
-    double stoc_usec_diff = client_recv_tv_usec - server_tv_usec;
-    double stoc_msec_diff = (double)(stoc_sec_diff * 1000 + ((double)stoc_usec_diff) / 1000);
+    uint64_t stoc_sec_diff = client_recv_tv_sec - server_tv_sec;
+    uint64_t stoc_usec_diff = client_recv_tv_usec - server_tv_usec;
+    uint64_t stoc_msec_diff = (uint64_t)(stoc_sec_diff * 1000.0000 + ((uint64_t)stoc_usec_diff) / 1000.0000);
 
-    double total_msec_diff = ctos_msec_diff + stoc_msec_diff;
+    printf("server milliseconds: %llu\n", stoc_msec_diff);
+    printf("server microseconds: %llu\n", stoc_usec_diff);
+    printf("server seconds: %llu\n", stoc_sec_diff);
+
+    uint64_t total_msec_diff = ctos_msec_diff + stoc_msec_diff;
 
     printf("Iteration %d:\n", interval + 1);
     printf("- Client-to-server latency: %.3lf ms\n", ctos_msec_diff);
@@ -188,33 +190,3 @@ int main(int argc, char **argv) {
 
   return 0;
 }
-
-// uint64_t htobe64(uint64_t host_64bits)
-// {
-//   uint64_t result = 0;
-//   result |= (host_64bits & 0x00000000000000FF) << 56;
-//   result |= (host_64bits & 0x000000000000FF00) << 40;
-//   result |= (host_64bits & 0x0000000000FF0000) << 24;
-//   result |= (host_64bits & 0x00000000FF000000) << 8;
-//   result |= (host_64bits & 0x000000FF00000000) >> 8;
-//   result |= (host_64bits & 0x0000FF0000000000) >> 24;
-//   result |= (host_64bits & 0x00FF000000000000) >> 40;
-//   result |= (host_64bits & 0xFF00000000000000) >> 56;
-//   return result;
-// }
-
-// uint64_t be64toh(uint64_t big_endian_64bits)
-// {
-//   uint64_t result = 0;
-
-//   result |= (big_endian_64bits & 0x00000000000000FFULL) << 56;
-//   result |= (big_endian_64bits & 0x000000000000FF00ULL) << 40;
-//   result |= (big_endian_64bits & 0x0000000000FF0000ULL) << 24;
-//   result |= (big_endian_64bits & 0x00000000FF000000ULL) << 8;
-//   result |= (big_endian_64bits & 0x000000FF00000000ULL) >> 8;
-//   result |= (big_endian_64bits & 0x0000FF0000000000ULL) >> 24;
-//   result |= (big_endian_64bits & 0x00FF000000000000ULL) >> 40;
-//   result |= (big_endian_64bits & 0xFF00000000000000ULL) >> 56;
-
-//   return result;
-// }
