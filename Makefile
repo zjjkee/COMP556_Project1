@@ -1,21 +1,32 @@
-CC	 	= gcc
-LD	 	= gcc
-CFLAGS	 	= -Wall -g
+CC = gcc
+CFLAGS = -Wall -Wextra -g -Iheaders
+SERVER_SRC = source/server.c
+CLIENT_SRC = source/client_num.c
+SERVER_OBJ = server.o
+CLIENT_OBJ = client_num.o
+TARGET_SERVER = server
+TARGET_CLIENT = client_num
+TARGET_ALL = $(TARGET_SERVER) $(TARGET_CLIENT)
 
-LDFLAGS	 	= 
-DEFS 	 	=
+.PHONY: all clean server client
 
-all:	server client_num
+all: $(TARGET_ALL)
 
-server: server.c
-	$(CC) $(DEFS) $(CFLAGS) $(LIB) -o server server.c
+$(SERVER_OBJ): $(SERVER_SRC)
+	$(CC) $(CFLAGS) -c $<
 
-client_num: client_num.c
-	$(CC) $(DEFS) $(CFLAGS) $(LIB) -o client_num client_num.c
+$(CLIENT_OBJ): $(CLIENT_SRC)
+	$(CC) $(CFLAGS) -c $<
+
+$(TARGET_SERVER): $(SERVER_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(TARGET_CLIENT): $(CLIENT_OBJ)
+	$(CC) $(CFLAGS) -o $@ $^
+
+server: $(TARGET_SERVER)
+
+client: $(TARGET_CLIENT)
 
 clean:
-	rm -f *.o
-	rm -f *~
-	rm -f core.*
-	rm -f server
-	rm -f client_num
+	rm -f $(SERVER_OBJ) $(CLIENT_OBJ) $(TARGET_ALL)
