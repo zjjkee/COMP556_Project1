@@ -258,7 +258,7 @@ int main(int argc, char **argv) {
 				if ( FD_ISSET( current->socket, &read_set ) )
 				{
 					/* we have data from a client */
-					/* Ping */
+					/* recieve once */
 					count = recv( current->socket, buf, BUF_LEN, 0 );
 
 					if ( count <= 0 )
@@ -278,31 +278,51 @@ int main(int argc, char **argv) {
 						dump( &head, current->socket );
 					} else {
 						uint16_t size = ntohs(*(uint16_t *) (buf));
-
 						/* size should range from 18~65535 */
 						if (size < 18 || size > 65535){
 							perror( "error receiving from a client" );
 						}
-
-						printf( "%d bytes were received from client\n", size );
-
-						/* caculate the time and embed it into the message */
-						struct timeval tv;
-						uint64_t server_tv_sec, server_tv_usec;
-						if (gettimeofday(&tv, NULL) == 0)
-						{
-							server_tv_sec = (uint64_t)tv.tv_sec;
-							server_tv_usec = (uint64_t)tv.tv_usec;
+						int tempcount = 0;
+						// continue recieving from client
+						while (count < size){
+							tempcount = recv( current->socket, buf + count, size - count, 0 );
+							if (tempcount <= 0){
+								continue;
+							}
+							count += tempcount;
+							printf( "Count is %i\n", count );
 						}
 
-						*(uint64_t *)(buf + 18) = (uint64_t)htobe64(server_tv_sec);
-						*(uint64_t *)(buf + 26) = (uint64_t)htobe64(server_tv_usec);
+						printf( "%d bytes were received from client\n", count );
+
+						// /* caculate the time and embed it into the message */
+						// struct timeval tv;
+						// uint64_t server_tv_sec, server_tv_usec;
+						// if (gettimeofday(&tv, NULL) == 0)
+						// {
+						// 	server_tv_sec = (uint64_t)tv.tv_sec;
+						// 	server_tv_usec = (uint64_t)tv.tv_usec;
+						// }
+
+						// *(uint64_t *)(buf + 18) = (uint64_t)htobe64(server_tv_sec);
+						// *(uint64_t *)(buf + 26) = (uint64_t)htobe64(server_tv_usec);
 
 						// /* Pong  */
-						if(send( current->socket, buf, size, 0 ) > 0){
-							ex_cnt ++;
-							printf( "Current exchange counts: %d\n", ex_cnt );
-						}						
+
+						count = send( current->socket, buf, size, 0 );
+						ex_cnt ++;
+						while ( count < size )
+						{
+							tempcount = send( current->socket, buf + count, size - count, 0 );	
+							if ( tempcount <= 0 )
+								continue;
+							
+							count += tempcount;
+
+						}
+						printf( "%d bytes were sent to  client\n", count );
+						printf( "Exchange Count %d\n ", ex_cnt);
+					
 					}
 
 					
