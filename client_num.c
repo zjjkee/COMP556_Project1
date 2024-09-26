@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
@@ -13,8 +14,10 @@
 /* simple client, takes two parameters, the server domain name,
    and the server port number */
 
-int main(int argc, char** argv) {
+uint64_t htobe64(uint64_t host_64bits);
+uint64_t be64toh(uint64_t big_endian_64bits);
 
+int main(int argc, char **argv) {
   /* our client socket */
   int sock;
 
@@ -33,30 +36,31 @@ int main(int argc, char** argv) {
   }
 
   /* server port number */
-  unsigned short server_port = atoi (argv[2]);
+  uint16_t server_port = (uint16_t)(atoi(argv[2]));
 
   char *buffer, *sendbuffer;
-  // int size = 500;
   int recvcount;
-  int iterval = 0;
+  int interval = 0;
 
-  int size = atoi(argv[3]);
+  /* size in bytes of the message */
+  uint16_t size = (uint16_t)atoi(argv[3]);
+
+  /* number of message exchanges to perform */
   int count = atoi(argv[4]);
   
   double elapsed = 0.0;
   struct timeval tv;
-  int stv_sec, stv_usec, tv_sec, tv_usec;
-//   struct timezone tz;
-  long int sent_sec, sent_usec;
-  
+  uint64_t client_send_tv_sec, client_send_tv_usec, client_recv_tv_sec, client_recv_tv_usec;
+  uint64_t server_tv_sec, server_tv_usec;
+
   if (size < 18 || size > 65535) {
-      perror("Invalid size, terminating the program");
-      abort();
+    perror("Invalid size, terminating the program");
+    abort();
   }
 
   if (count < 1 || count > 10000) {
-      perror("Invalid count, terminating the program");
-      abort();
+    perror("Invalid count, terminating the program");
+    abort();
   }
 
   /* allocate a memory buffer in the heap */
@@ -66,22 +70,25 @@ int main(int argc, char** argv) {
 
      leaves the potential for
      buffer overflow vulnerability */
+
+  // initialize the buffer for receiving
   buffer = (char *) malloc(size);
   if (!buffer) {
-      perror("failed to allocated buffer");
-      abort();
+    perror("failed to allocated buffer");
+    abort();
   }
 
-  sendbuffer = (char *) malloc(size);
+  // initialize the sendbuffer to 0s
+  sendbuffer = (char *)calloc(size, sizeof(char));
   if (!sendbuffer) {
-      perror("failed to allocated sendbuffer");
-      abort();
+    perror("failed to allocated sendbuffer");
+    abort();
   }
 
   /* create a socket */
   if ((sock = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-      perror ("opening TCP socket");
-      abort ();
+    perror ("opening TCP socket");
+    abort ();
   }
 
   /* fill in the server's address */
@@ -92,63 +99,69 @@ int main(int argc, char** argv) {
 
   /* connect to the server */
   if (connect(sock, (struct sockaddr *) &sin, sizeof (sin)) < 0) {
-      perror("connect to server failed");
-      abort();
+    perror("connect to server failed");
+    abort();
   }
 
-  while (iterval < count) {
-      // Size in header
-      *(short*)(sendbuffer) = (short)htons(size);
+  while (interval < count) {
+    // set the size in message
+    *(uint16_t *)(sendbuffer) = (uint16_t) htons(size);
 
-      // Timestamp in header
-    //   gettimeofday(&tv, &tz);
-        if(gettimeofday(&tv,NULL) == 0){
-            stv_sec = (int)tv.tv_sec;
-            stv_usec = (int)tv.tv_usec;
-        }
-      *(long int*)(sendbuffer + 2) = (long int)htonl(stv_sec);
-      *(long int*)(sendbuffer + 10) = (long int)htonl(stv_usec);
+    // set the 1st timestamp in message
+    if(gettimeofday(&tv,NULL) == 0){
+      client_send_tv_sec = (uint64_t)tv.tv_sec;
+      client_send_tv_usec = (uint64_t)tv.tv_usec;
+    }
+    *(uint64_t *)(sendbuffer + 2) = (uint64_t) htobe64(client_send_tv_sec);
+    *(uint64_t *)(sendbuffer + 10) = (uint64_t) htobe64(client_send_tv_usec);
 
-      // Nothing to do - Rest of data is 0
+    // Nothing to do - Rest of data is 0
 
-      // Send the message
-      send(sock, sendbuffer, size, 0);
+    // Send the message
+    send(sock, sendbuffer, size, 0);
 
 
-      // Wait for receive
-      recvcount = recv(sock, buffer, size, 0);
-      if (recvcount <= 0) {
-          perror("receive failure");
-          abort();
-      }
-        if(gettimeofday(&tv,NULL) == 0){
-            tv_sec = (int)tv.tv_sec;
-            tv_usec = (int)tv.tv_usec;
-        }
+    // Wait for receive
+    recvcount = recv(sock, buffer, size, 0);
+    if (recvcount != size) {
+        perror("receive failure");
+        abort();
+    }
 
-        // Latency calculation  
-        float sec_diff = (tv_sec - stv_sec)*1000.00;
-        float usec_diff = (tv_usec - stv_usec)/1000.00;	
-        float tmp = sec_diff + usec_diff;
-        printf("Latency in iteration %i is %.3f\n", iterval+1 ,tmp);
-    //   if (recvcount != size) {
-    //       printf("Message incomplete, something is still being transmitted\n");
-    //       // Todo: How to handle this?
-    //   }
-    //   else {
-    //     //   gettimeofday(&tv, &tz);
-    //       gettimeofday(&tv, NULL);
-    //       sent_sec = (long int)ntohl(*(long int*)(buffer + 2));
-    //       sent_usec = (long int)ntohl(*(long int*)(buffer + 10));
-    //       elapsed = elapsed + ((tv.tv_sec - sent_sec) * 1000 + ((tv.tv_usec - sent_usec) / 1000));
-    //   }
-    //   printf("Latency observed: %.3f", (elapsed / count));
-    //   // Iter update
-      iterval = iterval + 1;
+    // calculate the total latency = (client send to server) + (server send to client)
+    server_tv_sec = be64toh(*(uint64_t *)(buffer + 18));
+    server_tv_usec = be64toh(*(uint64_t *)(buffer + 26));
+
+    double ctos_sec_diff = server_tv_sec - client_send_tv_sec;
+    double ctos_usec_diff = server_tv_usec - client_send_tv_usec;
+    double ctos_msec_diff = (double)(ctos_sec_diff * 1000 + ((double)ctos_usec_diff) / 1000);
+
+    if (gettimeofday(&tv, NULL) == 0)
+    {
+      client_recv_tv_sec = (uint64_t)tv.tv_sec;
+      client_recv_tv_usec = (uint64_t)tv.tv_usec;
+    }
+
+    double stoc_sec_diff = client_recv_tv_sec - server_tv_sec;
+    double stoc_usec_diff = client_recv_tv_usec - server_tv_usec;
+    double stoc_msec_diff = (double)(stoc_sec_diff * 1000 + ((double)stoc_usec_diff) / 1000);
+
+    double total_msec_diff = ctos_msec_diff + stoc_msec_diff;
+
+    printf("Iteration %d:\n", interval + 1);
+    printf("- Client-to-server latency: %.3lf ms\n", ctos_msec_diff);
+    printf("- Server-to-client latency: %.3lf ms\n", stoc_msec_diff);
+    printf("- Total latency: %.3lf ms\n\n", total_msec_diff);
+
+    // calculate the total latency over iterations
+    elapsed += total_msec_diff;
+
+    // Iter update
+    interval = interval + 1;
   }
 
   // Final latency value
-//   printf("Latency: %.3f", (elapsed / count));
+  printf("Average latency of %d iterations: %.3f\n", count, (elapsed / count));
 
   // Free resources 
   close(sock);
@@ -156,4 +169,34 @@ int main(int argc, char** argv) {
   free(sendbuffer);
 
   return 0;
+}
+
+uint64_t htobe64(uint64_t host_64bits)
+{
+  uint64_t result = 0;
+  result |= (host_64bits & 0x00000000000000FF) << 56;
+  result |= (host_64bits & 0x000000000000FF00) << 40;
+  result |= (host_64bits & 0x0000000000FF0000) << 24;
+  result |= (host_64bits & 0x00000000FF000000) << 8;
+  result |= (host_64bits & 0x000000FF00000000) >> 8;
+  result |= (host_64bits & 0x0000FF0000000000) >> 24;
+  result |= (host_64bits & 0x00FF000000000000) >> 40;
+  result |= (host_64bits & 0xFF00000000000000) >> 56;
+  return result;
+}
+
+uint64_t be64toh(uint64_t big_endian_64bits)
+{
+  uint64_t result = 0;
+
+  result |= (big_endian_64bits & 0x00000000000000FFULL) << 56;
+  result |= (big_endian_64bits & 0x000000000000FF00ULL) << 40;
+  result |= (big_endian_64bits & 0x0000000000FF0000ULL) << 24;
+  result |= (big_endian_64bits & 0x00000000FF000000ULL) << 8;
+  result |= (big_endian_64bits & 0x000000FF00000000ULL) >> 8;
+  result |= (big_endian_64bits & 0x0000FF0000000000ULL) >> 24;
+  result |= (big_endian_64bits & 0x00FF000000000000ULL) >> 40;
+  result |= (big_endian_64bits & 0xFF00000000000000ULL) >> 56;
+
+  return result;
 }

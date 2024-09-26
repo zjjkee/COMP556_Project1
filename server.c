@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -9,6 +10,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <stdbool.h>
+#include <sys/time.h>
 
 /* A linked list node data structure to maintain application
  * information related to a connected socket */
@@ -59,6 +61,9 @@ void add( struct node *head, int socket, struct sockaddr_in addr )
 	new_node->next	= head->next;
 	head->next	= new_node;
 }
+
+uint64_t htobe64(uint64_t host_64bits);
+uint64_t be64toh(uint64_t big_endian_64bits);
 
 /*****************************************/
 /* main program                          */
@@ -272,13 +277,26 @@ int main(int argc, char **argv) {
 						close( current->socket );
 						dump( &head, current->socket );
 					} else {
-						int size = (int) ntohs( *(int *) (buf) );
+						uint16_t size = ntohs(*(uint16_t *) (buf));
+
 						/* size should range from 18~65535 */
 						if (size < 18 || size > 65535){
 							perror( "error receiving from a client" );
 						}
 
 						printf( "%d bytes were received from client\n", size );
+
+						/* caculate the time and embed it into the message */
+						struct timeval tv;
+						uint64_t server_tv_sec, server_tv_usec;
+						if (gettimeofday(&tv, NULL) == 0)
+						{
+							server_tv_sec = (uint64_t)tv.tv_sec;
+							server_tv_usec = (uint64_t)tv.tv_usec;
+						}
+
+						*(uint64_t *)(buf + 18) = (uint64_t)htobe64(server_tv_sec);
+						*(uint64_t *)(buf + 26) = (uint64_t)htobe64(server_tv_usec);
 
 						// /* Pong  */
 						if(send( current->socket, buf, size, 0 ) > 0){
@@ -294,4 +312,34 @@ int main(int argc, char **argv) {
         }
 		
     }
+}
+
+uint64_t htobe64(uint64_t host_64bits)
+{
+	uint64_t result = 0;
+	result |= (host_64bits & 0x00000000000000FF) << 56;
+	result |= (host_64bits & 0x000000000000FF00) << 40;
+	result |= (host_64bits & 0x0000000000FF0000) << 24;
+	result |= (host_64bits & 0x00000000FF000000) << 8;
+	result |= (host_64bits & 0x000000FF00000000) >> 8;
+	result |= (host_64bits & 0x0000FF0000000000) >> 24;
+	result |= (host_64bits & 0x00FF000000000000) >> 40;
+	result |= (host_64bits & 0xFF00000000000000) >> 56;
+	return result;
+}
+
+uint64_t be64toh(uint64_t big_endian_64bits)
+{
+	uint64_t result = 0;
+
+	result |= (big_endian_64bits & 0x00000000000000FFULL) << 56;
+	result |= (big_endian_64bits & 0x000000000000FF00ULL) << 40;
+	result |= (big_endian_64bits & 0x0000000000FF0000ULL) << 24;
+	result |= (big_endian_64bits & 0x00000000FF000000ULL) << 8;
+	result |= (big_endian_64bits & 0x000000FF00000000ULL) >> 8;
+	result |= (big_endian_64bits & 0x0000FF0000000000ULL) >> 24;
+	result |= (big_endian_64bits & 0x00FF000000000000ULL) >> 40;
+	result |= (big_endian_64bits & 0xFF00000000000000ULL) >> 56;
+
+	return result;
 }
