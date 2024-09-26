@@ -63,8 +63,8 @@ void add(struct node* head, int socket, struct sockaddr_in addr)
     head->next = new_node;
 }
 
-uint64_t htobe64(uint64_t host_64bits);
-uint64_t be64toh(uint64_t big_endian_64bits);
+// uint64_t htobe64(uint64_t host_64bits);
+// uint64_t be64toh(uint64_t big_endian_64bits);
 
 /*****************************************/
 /* main program                          */
