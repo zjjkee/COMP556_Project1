@@ -85,7 +85,7 @@ Note:\
 The **size** refers to the number of bytes in each message sent by the client, and the **count** refers to the number of message exchanges to be performed.
 
 ### 1. Basic Functional Testing
-#### Start with small message sizes (size = 18 bytes) and a small number of exchanges (count = 10), verify the following:
+#### Start with a small message size (size = 18 bytes) and a small number of exchanges (count = 10), verify the following:
 - The client **connects** to the server.
 - The server **accepts** the connection from the client.
 - The client **sends a ping message** to the server.
@@ -111,19 +111,19 @@ The **size** refers to the number of bytes in each message sent by the client, a
 
 #### Test the following scenarios:
 Note:\
-The concurrency testing here involves the stress testing by increase the number of clients, the size, or the count.
+The concurrency testing here involves the stress testing by increasing the number of clients, the size, or the count.
 
-- For number of clients = 2, 4, or 8, perform the following test cases:\
+- For **number of clients** = 2 or 10, perform the following test cases:\
   A. Increase the size
-  - size = 18; count = 10
-  - size = 5000; count = 10
-  - size = 65535; count = 10
+  - **size** = 18; **count** = 10
+  - **size** = 5000; **count** = 10
+  - **size** = 65535; **count** = 10
 
   B. Increase the count
-  - size = 18; count = 5000
-  - size = 18; count = 10000
-  - size = 65535; count = 5000
-  - size = 65535; count = 10000
+  - **size** = 18; **count** = 5000
+  - **size** = 18; **count** = 10000
+  - **size** = 65535; **count** = 5000
+  - **size** = 65535; **count** = 10000
 
 ### 4. Error Handling Testing
 #### For the client, verify the following:
