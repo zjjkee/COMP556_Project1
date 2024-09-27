@@ -146,8 +146,9 @@ int main(int argc, char** argv) {
             recv_tv_usec = (uint64_t)tv.tv_usec;
         }
 
-        uint64_t lat_sec_diff = recv_tv_sec - sent_tv_sec;
-        uint64_t lat_usec_diff = recv_tv_usec - sent_tv_usec;
+        int64_t lat_sec_diff = recv_tv_sec - sent_tv_sec;
+        int64_t lat_usec_diff = recv_tv_usec - sent_tv_usec;
+
         double total_lat = (double)(lat_sec_diff * 1000 + ((double)lat_usec_diff) / 1000);
 
         printf("Iteration %d:\n", interval + 1);
@@ -161,7 +162,7 @@ int main(int argc, char** argv) {
     }
 
     // Final latency value
-    printf("Average latency of %d iterations: %.3f\n", count, (elapsed / count));
+    printf("Average latency of %d iterations: %.3f ms\n", count, (elapsed / count));
 
     // Free resources
     close(sock);
