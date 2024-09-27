@@ -205,7 +205,7 @@ int main(int argc, char** argv) {
 
         double bw_dep = fabs(((msgsize[1] - msgsize[0]) * 2) / (latencies[1] - latencies[0]));
         printf("Dependent bandwidth: %.3lf bytes/msec\n", bw_dep);
-        double t_ind = fabs(latencies[0] - (msgsize[0] * 2)) / bw_dep;
+        double t_ind = latencies[0] - ((msgsize[0] * 2) / bw_dep);
         printf("Independent latency: %.3lf ms\n", t_ind);
         bandwidths = bandwidths + bw_dep;
         delay_ind = delay_ind + t_ind;
