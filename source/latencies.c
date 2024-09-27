@@ -207,14 +207,12 @@ int main(int argc, char** argv) {
         printf("Dependent bandwidth: %.3lf bytes/msec\n", bw_dep);
         double t_ind = fabs(latencies[0] - (msgsize[0] * 2)) / bw_dep;
         printf("Independent latency: %.3lf ms\n", t_ind);
-        double bw_ind = (msgsize[0] * 2) / t_ind;
-        printf("Independent bandwidth: %.3lf bytes/msec\n", bw_ind);
-        bandwidths = bandwidths + bw_ind;
+        bandwidths = bandwidths + bw_dep;
         delay_ind = delay_ind + t_ind;
     }
 
-    printf("\nAverage Independent latency: %.3lf ms\n", (delay_ind / testiters));
-    printf("\nAverage Independent Bandwidth: %.3lf bytes/msec\n", (bandwidths / testiters));
+    printf("\nAverage Independent Latency: %.3lf ms\n", (delay_ind / testiters));
+    printf("\nAverage Dependent Bandwidth: %.3lf bytes/msec\n", (bandwidths / testiters));
 
     // Free resources
     close(sock);
