@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
         int k;
 
         srand(time(0));
-        msgsize[0] = (rand() % (9000 - 20 + 1)) + 20;
+        msgsize[0] = 18;
         msgsize[1] = 65535 - msgsize[0];
 
         for (k = 0; k < 2; k++) {
