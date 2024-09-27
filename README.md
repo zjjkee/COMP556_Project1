@@ -79,3 +79,55 @@ After building the project, you can run the executables as follows:
 ```bash
 ./latencies <server_ip> <port> <size> <count> //latencies
 ```
+
+## Functional Testing
+### 1. Basic Functionality Test
+Start with small message sizes = 18 bytes and a small number of exchanges = 10.\
+Verify the following:
+- The client **connects** to the server.
+- The server **accepts** the connection from the client.
+- The client **sends a ping message** to the server.
+- The server **receives the ping message** from the client.
+- The server **sends the pong message** back to the client.
+- The client **receives the pong message** from the server.
+- The client **prints the RTT** correctly for that iteration.
+- The client and the server **exchange messages** for **count** times of iterations.
+- The client **prints the average RTT** correctly.
+- The client **terminates** after completing the message exchanges.
+- The server **observes** the connection was closed by the client.
+
+### 2. Edge Cases Testing
+For the **client**, verify the following:
+- **Size** with a value of 18 (min) and 65535 (max) should function properly.
+- **Count** with a value of 1 (min) and 10000 (max) should function properly.
+
+### 3. Concurrency Testing
+For the following scenarios, ensure monitoring of both the client and server behavior as follows:
+- The server responds to each client without crashing.
+- Each client receives the pong message back from the server and prints the average RTT.
+- The latency measurements from each client are within acceptable ranges (i.e., no unusual delays due to multiple clients).
+
+Scenarios:\
+The concurrency testing here involves the stress testing by increase the number of clients, the size, or the count.
+- For number of clients = 2, 4, or 8, test the following scenarios:\
+  A. Increase the size
+  - size = 18; count = 10
+  - size = 5000; count = 10
+  - size = 65535; count = 10
+
+  B. Increase the count
+  - size = 18; count = 5000
+  - size = 18; count = 10000
+  - size = 65535; count = 5000
+  - size = 65535; count = 10000
+
+Note that the **size** refers to the number of bytes in each message sent by the client, and the **count** refers to the number of message exchanges to be performed.
+
+### 4. Error Handling Testing
+For the **client**, verify the following:
+- **Port** outside the range [18000, 18200] should trigger an error.
+- **Size** outside the range [18, 65535] should trigger an error.
+- **Count** outside the range [1, 10000] should trigger an error.
+
+For the **server**, verify the following:
+- **Port** outside the range [18000, 18200] should trigger an error.
