@@ -133,3 +133,13 @@ The concurrency testing here involves the stress testing by increasing the numbe
 
 #### For the server, verify the following:
 - **Port** outside the range [18000, 18200] should trigger an error.
+
+## Problems Found
+When measuring independent delay and true bandwidth，though we use the optimized calculation approach , the measurement results are unstable, and sometimes the deviation is significant. There are some probable underlying reasons after analsis:
+
+### 1.Network Jitter
+Network latency is often not constant, especially on public networks with a fluctuating traffic. Jitter (variability in packet delay) may cause varying results, particularly when we are sending and receiving messages of significantly different sizes. We're measuring the time difference between sending and receiving, which can easily be affected by network jitter.
+### 2. Time Synchronization Issues
+Since we used gettimeofday() to record time, the results may be affected by the operating system’s scheduling. The system scheduling other processes could interfere with our latency measurement, especially if the system is under heavy load.( Can this be improved by using a high-precision clock such as clock_gettime() instead of gettimeofday ? which typically provides more accurate timestamps)
+### 3. Impact of Message Size Differences
+In the code, we randomly generate message sizes for msgsize[0] and msgsize[1], which then we measure bandwidth and latency based on . Large variations in message sizes (e.g., from 20 to 65535 bytes) may lead to different network behaviors, resulting in unstable measurements. Large messages impose a heavier network load, while smaller messages may be more affected by network overhead, leading a unstable result. This could be improve by repeating more times on testing and set a appropriate difference step between message sizes and using a series of msg sizeds instead of each loop, calculate the average and standard deviation to mitigate the impact.
